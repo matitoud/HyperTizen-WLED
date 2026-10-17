@@ -1,0 +1,59 @@
+:root { color-scheme: dark; font-family: Arial, sans-serif; background: #071625; color: #f3f8ff; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(circle at 85% 0%, #164b75 0, #071625 48%); min-height: 100vh; }
+.shell { max-width: 1160px; margin: 0 auto; padding: 46px 52px 38px; }
+.header, .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.header { margin-bottom: 30px; }
+.eyebrow { color: #61d9f3; font-size: 15px; font-weight: 800; letter-spacing: .16em; margin: 0 0 9px; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { font-size: 51px; line-height: 1.05; letter-spacing: -.04em; margin-bottom: 8px; }
+h1 span { color: #72e6ff; }
+h2 { font-size: 30px; margin-bottom: 0; }
+h3 { font-size: 22px; margin-bottom: 7px; }
+.subtitle, .hint, .keypad-help { color: #b8cbdb; font-size: 19px; line-height: 1.4; }
+.subtitle { margin-bottom: 0; }
+.status { border: 1px solid #30607b; border-radius: 999px; padding: 12px 20px; background: #10314a; color: #b9f7ff; font-size: 17px; max-width: 40%; text-align: center; }
+.card { background: #10273b; border: 1px solid #2b526a; border-radius: 24px; padding: 28px 34px; margin-bottom: 20px; box-shadow: 0 14px 28px #0003; }
+.primary-card { background: #15324a; }
+.section-heading { margin-bottom: 18px; }
+.chip { color: #a9effa; background: #1b4657; border: 1px solid #367287; border-radius: 999px; padding: 10px 16px; font-size: 15px; font-weight: bold; white-space: nowrap; }
+.field-grid, .options-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.field-wide { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 8px; color: #cde3f1; font-size: 18px; font-weight: 700; }
+.field input, .field select { width: 100%; height: 58px; border: 2px solid #426b83; border-radius: 13px; padding: 0 17px; background: #071c2d; color: #fff; font-size: 24px; font-family: inherit; cursor: pointer; }
+.field input::placeholder { color: #6e8da2; }
+.field input[readonly] { caret-color: transparent; }
+.field:focus-within { color: #fff; }
+.field input:focus, .field select:focus, .option:focus-within, .switch-row:focus-within, button:focus, .ssdpItem:focus { outline: 5px solid #ffdc58; outline-offset: 3px; box-shadow: 0 0 0 9px #ffdc5830; background-color: #16435c; }
+.destination { color: #b8d7e9; font-size: 17px; margin: 14px 0 0; overflow-wrap: anywhere; }
+.divider { height: 1px; background: #325267; margin: 25px 0; }
+.hint { margin-bottom: 17px; }
+.option, .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 2px solid #426b83; background: #0b2234; border-radius: 14px; padding: 16px 19px; cursor: pointer; }
+.switch-row { font-size: 18px; font-weight: 700; white-space: nowrap; }
+.option strong { display: block; font-size: 18px; }
+.option small { display: block; color: #aec5d4; font-size: 15px; margin-top: 5px; line-height: 1.35; }
+.option input, .switch-row input { width: 26px; height: 26px; accent-color: #52d6ec; flex: none; cursor: pointer; }
+.transition-field { margin: 20px 0 24px; max-width: 49%; }
+button { font-family: inherit; cursor: pointer; }
+.primary-button { width: 100%; border: 0; border-radius: 14px; min-height: 62px; padding: 10px 20px; background: #65dced; color: #082333; font-size: 22px; font-weight: 800; }
+.primary-button:focus { background: #baf6ff; }
+.connection-card { border-color: #dd9c49; }
+.connection-grid { display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: end; }
+.secondary-button { min-height: 58px; padding: 8px 22px; border: 2px solid #6fd9e9; border-radius: 13px; background: #19566b; color: #fff; font-size: 19px; font-weight: 700; }
+.secondary-button:focus { background: #257a92; }
+.message { color: #ffd88b; font-size: 18px; min-height: 22px; margin: 14px 0 0; }
+.server-list { display: flex; flex-direction: column; gap: 12px; }
+.ssdpItem { width: 100%; border: 2px solid #426b83; border-radius: 13px; padding: 17px; background: #0b2234; color: #fff; font-size: 20px; cursor: pointer; }
+.remote-help { color: #a7c0d1; text-align: center; font-size: 17px; padding: 10px; }
+.remote-help span { color: #4e8299; padding: 0 10px; }
+.keypad-overlay { position: fixed; inset: 0; z-index: 10; background: #020b14e8; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.keypad-overlay[hidden] { display: none; }
+.keypad-panel { width: min(540px, 100%); padding: 30px; background: #112c43; border: 2px solid #4a8aa7; border-radius: 24px; box-shadow: 0 30px 70px #0009; }
+.keypad-value { min-height: 64px; margin: 20px 0; padding: 13px 17px; border: 2px solid #67dbe9; border-radius: 12px; background: #061b2b; font-size: 28px; overflow-wrap: anywhere; }
+.keypad-value:empty::before { content: 'Sin valor'; color: #809bad; }
+.keypad-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.keypad-key { min-height: 65px; border: 2px solid #4d7891; border-radius: 12px; background: #173b54; color: #fff; font-size: 24px; font-weight: bold; }
+.keypad-key.action { background: #22566d; font-size: 19px; }
+.keypad-key.done { background: #64ddea; color: #062332; font-size: 20px; }
+.keypad-help { font-size: 16px; margin: 20px 0 0; text-align: center; }
+@media (max-width: 780px) { .shell { padding: 22px; } .header, .section-heading { align-items: flex-start; flex-direction: column; } .status { max-width: 100%; } h1 { font-size: 37px; } .card { padding: 22px; } .field-grid, .options-grid, .connection-grid { grid-template-columns: 1fr; } .field-wide { grid-column: auto; } .transition-field { max-width: none; } }

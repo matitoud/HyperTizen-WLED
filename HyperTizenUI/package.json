@@ -1,0 +1,12 @@
+{
+  "name": "@foxreis/hypertizen",
+  "appName": "HyperTizen WLED Direct",
+  "version": "1.0.4",
+  "description": "Ambilight directo desde una TV Samsung Tizen a WLED por UDP/DDP, con HyperHDR como alternativa.",
+  "packageType": "app",
+  "appPath": "index.html",
+  "author": "Reis Can",
+  "serviceFile": "js/service.js",
+  "keys": [],
+  "license": "GPL-3.0-only"
+}

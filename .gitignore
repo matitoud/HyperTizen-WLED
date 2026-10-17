@@ -1,0 +1,43 @@
+# Build output and caches
+**/bin/
+**/obj/
+**/.buildResult/
+**/release/
+**/.vs/
+**/node_modules/
+**/dist/
+*.cache
+*.log
+*.tmp
+*.tpk
+*.wgt
+*.zip
+
+# Local Tizen Studio and device settings
+tizen_workspace.yaml
+**/*.csproj.user
+**/.sign/
+**/profiles.xml
+**/profile/
+**/*duid*
+**/*.p12
+**/*.pfx
+**/*.jks
+**/*.keystore
+**/*.pem
+**/*.key
+**/settings.local.*
+**/config.local.*
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store
+
+# Backups and private test artifacts
+*backup*/
+*Backup*/
+Prueba-WLED/
+Restaurar/

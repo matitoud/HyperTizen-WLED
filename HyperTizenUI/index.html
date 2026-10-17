@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperTizen WLED Direct</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="js/wsClient.js"></script>
+    <script src="js/ui.js" defer></script>
+    <script src="$WEBAPIS/webapis/webapis.js"></script>
+</head>
+<body>
+    <main class="shell">
+        <header class="header">
+            <div>
+                <p class="eyebrow">AMBILIGHT DIRECTO</p>
+                <h1>HyperTizen <span>WLED</span></h1>
+                <p class="subtitle">Configurá los LED desde tu televisor</p>
+            </div>
+            <p id="status" class="status" role="status">Conectando con la configuración…</p>
+        </header>
+
+        <section class="card primary-card" aria-labelledby="outputTitle">
+            <div class="section-heading">
+                <div><p class="eyebrow">01 · SALIDA</p><h2 id="outputTitle">Elegí el destino</h2></div>
+                <label class="switch-row" for="enabled"><span>Ambilight activo</span><input id="enabled" type="checkbox" aria-label="Activar o desactivar Ambilight"></label>
+            </div>
+            <label class="field" for="outputMode"><span>Modo de salida</span><select id="outputMode"><option value="hyperhdr">HyperHDR</option><option value="wled">WLED DDP · directo al ESP32</option></select></label>
+            <p id="outputInfo" class="destination"></p>
+        </section>
+
+        <section id="connectionPanel" class="card connection-card" aria-labelledby="connectionTitle" hidden>
+            <p class="eyebrow">CONEXIÓN CON EL SERVICIO</p>
+            <h2 id="connectionTitle">Encontrar esta TV</h2>
+            <p class="hint">Si no conecta automáticamente, escribí la IP <strong>de la TV</strong>. Es distinta de la IP del ESP32 y queda guardada solo en esta interfaz.</p>
+            <div class="connection-grid">
+                <label class="field" for="tvIpOverride"><span>IP de esta TV</span><input id="tvIpOverride" class="keypad-input" type="text" inputmode="none" readonly placeholder="192.168.1.50" data-title="IP de esta TV"></label>
+                <button id="connectTv" class="secondary-button" type="button">Conectar con HyperTizen</button>
+            </div>
+            <p id="connectionMessage" class="message" role="status"></p>
+        </section>
+
+        <section id="wledSettings" class="card" aria-labelledby="wledTitle">
+            <div class="section-heading"><div><p class="eyebrow">02 · CONFIGURACIÓN</p><h2 id="wledTitle">Tu tira LED</h2></div><span class="chip">DDP · UDP 4048</span></div>
+            <p class="hint">Parate sobre un campo y apretá OK para editarlo con el teclado en pantalla.</p>
+            <div class="field-grid">
+                <label class="field field-wide" for="wledIp"><span>IP del ESP32 con WLED</span><input id="wledIp" class="keypad-input" type="text" inputmode="none" readonly placeholder="192.168.1.100" data-title="IP del ESP32" aria-label="IP del ESP32 con WLED"></label>
+                <label class="field" for="ledCount"><span>Píxeles direccionables</span><input id="ledCount" class="keypad-input" type="text" inputmode="none" readonly value="40" data-title="Píxeles direccionables"></label>
+                <label class="field" for="ledStart"><span>Primer píxel</span><input id="ledStart" class="keypad-input" type="text" inputmode="none" readonly value="0" data-title="Primer píxel"></label>
+            </div>
+            <div class="divider"></div>
+            <h3>Distribución alrededor de la pantalla</h3>
+            <p class="hint">Los cuatro lados deben sumar el total de píxeles direccionables.</p>
+            <div class="field-grid sides-grid">
+                <label class="field" for="ledTop"><span>↑ Arriba</span><input id="ledTop" class="keypad-input" type="text" inputmode="none" readonly value="12" data-title="Píxeles arriba"></label>
+                <label class="field" for="ledRight"><span>→ Derecha</span><input id="ledRight" class="keypad-input" type="text" inputmode="none" readonly value="8" data-title="Píxeles derecha"></label>
+                <label class="field" for="ledBottom"><span>↓ Abajo</span><input id="ledBottom" class="keypad-input" type="text" inputmode="none" readonly value="12" data-title="Píxeles abajo"></label>
+                <label class="field" for="ledLeft"><span>← Izquierda</span><input id="ledLeft" class="keypad-input" type="text" inputmode="none" readonly value="8" data-title="Píxeles izquierda"></label>
+            </div>
+            <div class="divider"></div>
+            <div class="options-grid">
+                <label class="option" for="ledReverse"><span><strong>Invertir sentido</strong><small>Si los colores recorren la tira al revés</small></span><input id="ledReverse" type="checkbox"></label>
+                <label class="option" for="wledSmooth"><span><strong>Suavizar colores</strong><small>Interpola los envíos; no aumenta la captura real</small></span><input id="wledSmooth" type="checkbox"></label>
+            </div>
+            <label class="field transition-field" for="wledTransitionMs"><span>Transición en milisegundos</span><input id="wledTransitionMs" class="keypad-input" type="text" inputmode="none" readonly value="150" data-title="Transición en milisegundos"></label>
+            <button id="saveWled" class="primary-button" type="button">Guardar configuración de WLED</button>
+            <p id="wledMessage" class="message" role="status"></p>
+        </section>
+
+        <section id="ssdpSection" class="card" aria-labelledby="ssdpDeviceTitle">
+            <p class="eyebrow">02 · HYPERHDR</p><h2 id="ssdpDeviceTitle">Servidores disponibles</h2>
+            <p class="hint">Elegí un servidor si querés usar el modo original.</p>
+            <div id="ssdpItems" class="server-list"></div>
+        </section>
+        <footer class="remote-help">↑ ↓ Navegar <span>·</span> OK Seleccionar o editar <span>·</span> Volver Cerrar teclado</footer>
+    </main>
+    <div id="keypad" class="keypad-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="keypadTitle">
+        <div class="keypad-panel">
+            <p class="eyebrow">EDITAR VALOR</p><h2 id="keypadTitle">Campo</h2>
+            <div id="keypadValue" class="keypad-value" aria-live="polite"></div>
+            <div id="keypadKeys" class="keypad-keys"></div>
+            <p class="keypad-help">Usá las flechas y OK. «Listo» confirma; Volver cancela.</p>
+        </div>
+    </div>
+</body>
+</html>
