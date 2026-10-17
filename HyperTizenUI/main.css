@@ -46,6 +46,10 @@ button { font-family: inherit; cursor: pointer; }
 .ssdpItem { width: 100%; border: 2px solid #426b83; border-radius: 13px; padding: 17px; background: #0b2234; color: #fff; font-size: 20px; cursor: pointer; }
 .remote-help { color: #a7c0d1; text-align: center; font-size: 17px; padding: 10px; }
 .remote-help span { color: #4e8299; padding: 0 10px; }
+.project-credit { color: #a7c0d1; text-align: center; font-size: 17px; padding: 8px 10px 20px; }
+.project-credit span { color: #4e8299; padding: 0 8px; }
+.project-credit a { display: inline-block; color: #72e6ff; padding: 7px 10px; border-radius: 8px; text-decoration: underline; }
+.project-credit a:focus { outline: 5px solid #ffdc58; outline-offset: 3px; background: #16435c; color: #fff; }
 .keypad-overlay { position: fixed; inset: 0; z-index: 10; background: #020b14e8; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .keypad-overlay[hidden] { display: none; }
 .keypad-panel { width: min(540px, 100%); padding: 30px; background: #112c43; border: 2px solid #4a8aa7; border-radius: 24px; box-shadow: 0 30px 70px #0009; }

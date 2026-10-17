@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const mainSelector = '#outputMode, #enabled, #tvIpOverride, #connectTv, #wledSettings input, #saveWled, .ssdpItem';
+    const mainSelector = '#outputMode, #enabled, #tvIpOverride, #connectTv, #wledSettings input, #saveWled, .ssdpItem, .project-credit a';
     const keypad = document.getElementById('keypad');
     const keys = document.getElementById('keypadKeys');
     const valueDisplay = document.getElementById('keypadValue');

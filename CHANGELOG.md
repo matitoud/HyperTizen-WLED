@@ -1,5 +1,9 @@
 # Registro de cambios
 
+## Interfaz 1.0.7 — prueba local
+
+- Crédito «Desarrollado por @matitoud» y enlace al repositorio al pie de la interfaz, accesible con el control remoto.
+
 ## Interfaz 1.0.6 y suavizado adaptativo — prueba local
 
 - Casilla experimental de suavizado adaptativo, exclusiva con el suavizado de tiempo fijo en la interfaz y el servicio.
