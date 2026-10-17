@@ -31,8 +31,8 @@ The TV samples eight positions around the picture using `libvideoenhance.so`, ma
 
 - Direct WLED/DDP mode, plus the original HyperHDR mode.
 - Configurable WLED IP, addressable pixel count, pixels per side, first pixel, and strip direction.
-- Optional interpolation at a target of about 30 DDP sends per second; configurable 50–500 ms transition (150 ms default).
-- Performance logs distinguish **capture FPS** from **DDP send FPS**. Interpolation does not increase the real capture rate. The tested TV captures about 5–6 FPS.
+- Optional interpolation at a target of about 30 DDP sends per second; configurable 50–500 ms transition (60 ms UI default).
+- Performance logs and the TV UI distinguish **capture FPS** from **DDP send FPS**. Interpolation does not increase the real capture rate. The tested TV captures about 5–6 FPS in the eight-point mode. The new four-point mode has not yet been measured on that TV.
 - Eight capture samples provide coarse spatial detail. Firmware and DRM behavior can vary. The experimental full-frame SecVideoCapture path is retained for HyperHDR only; it was not active on the tested TV.
 - Compatibility with other Samsung TVs, Tizen versions, LED controllers, and protected content is not established.
 
@@ -76,9 +76,9 @@ Enter the ESP32 address **on the TV**, in the **HyperTizen WLED Direct** TizenBr
 
 In **HyperTizen WLED Direct**, choose **WLED DDP** and enter the ESP32's local address in **IP de WLED** (for example `192.168.1.100`; use your own address). On the TV remote, use **Up/Down** to navigate, **OK** to open a field, the on-screen keypad to enter numbers, **Listo** to confirm, or **Back** to cancel. A thick yellow outline marks the focused control. Set the number of **addressable pixels** and the top, right, bottom, and left counts so their sum equals the total. Press **Guardar configuración de WLED**, then check **Activado**. The logical path begins at the top-left and runs clockwise. `First physical pixel` rotates the mapping; `Reverse strip direction` changes its direction.
 
-For the tested 40-pixel setup, an initial layout is 12 top, 8 right, 12 bottom, 8 left. Adjust these values to your own physical wiring. Turn smoothing on or off to compare. A 120–180 ms transition is a useful starting range; longer transitions look softer but add visual lag.
+For the tested 40-pixel setup, an initial layout is 12 top, 8 right, 12 bottom, 8 left. Adjust these values to your own physical wiring. To reduce lag, try **Captura rápida · 4 puntos** with a 60 ms transition, or disable smoothing. Fast capture reuses one validated sample per side for both zones on that side: fewer hardware batches, less spatial detail. It requires installing the updated service `.tpk`; updating only the TizenBrew module is insufficient. The TizenBrew UI updates measured capture FPS and DDP send rate about once per second.
 
-The `.tpk` built from this source listens on the TV's loopback interface only. For compatibility with an older working `.tpk` that listens on the LAN, the UI tries `127.0.0.1` first, then the TV's own IP obtained through Samsung's Network API. If detection fails, enter the TV's IP in **IP de esta TV** and select **Conectar con HyperTizen**. This is different from the ESP32 address and is saved only in the UI's local storage. Do not expose the configuration port to the Internet.
+The UI tries `127.0.0.1` first, then the TV's own IP obtained through Samsung's Network API. If detection fails, enter the TV's IP in **IP de esta TV** and select **Conectar con HyperTizen**. This is different from the ESP32 address and is saved only in the UI's local storage. The new service accepts configuration requests originating on the TV itself and rejects other network clients. Do not expose the configuration port to the Internet.
 
 ## Build from source
 
@@ -91,7 +91,7 @@ Requires the .NET SDK, Tizen Studio TV SDK, and a Samsung signing profile. Clone
 | No LEDs | TV and ESP32 network reachability; WLED DDP port 4048; WLED pixel count; service enabled and WLED mode selected. |
 | Wrong side or direction | Adjust per-side counts, first pixel, and reverse direction. |
 | Jerky movement | Enable smoothing; compare the capture FPS and DDP FPS in `WLED perf` logs. |
-| Noticeable delay | Reduce the transition toward 120 ms or disable smoothing. |
+| Noticeable delay | Try four-point capture, a 60 ms transition, or disable smoothing. Compare real capture FPS before and after. |
 | Installer rejects the package | Re-sign with your own Samsung certificate and TV's device ID; do not use another user's signed package. |
 | Capture fails | This TV may not expose the eight-point `libvideoenhance.so` API; collect logs and report model/firmware. |
 | The UI shows an old HyperHDR address while WLED works | Update the `HyperTizenUI` module. A saved address does not indicate a live connection or affect DDP output. |
@@ -101,7 +101,7 @@ Requires the .NET SDK, Tizen Studio TV SDK, and a Samsung signing profile. Clone
 
 **Does it need a PC while watching?** No. Installation and updates may need one.
 
-**Does 30 FPS mean 30 FPS capture?** No. It is the target DDP send rate for interpolated colors. The tested TV captures about 5–6 FPS.
+**Does 30 FPS mean 30 FPS capture?** No. It is the target DDP send rate for interpolated colors. The verified eight-point capture rate is about 5–6 FPS; four-point capture still needs a TV measurement.
 
 **Can it replace HyperHDR?** WLED direct mode can run without HyperHDR. HyperHDR remains an alternative output mode.
 

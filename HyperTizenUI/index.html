@@ -43,6 +43,7 @@
         <section id="wledSettings" class="card" aria-labelledby="wledTitle">
             <div class="section-heading"><div><p class="eyebrow">02 · CONFIGURACIÓN</p><h2 id="wledTitle">Tu tira LED</h2></div><span class="chip">DDP · UDP 4048</span></div>
             <p class="hint">Parate sobre un campo y apretá OK para editarlo con el teclado en pantalla.</p>
+            <p id="perfWled" class="hint" aria-live="polite">FPS de captura: esperando medición de la TV…</p>
             <div class="field-grid">
                 <label class="field field-wide" for="wledIp"><span>IP del ESP32 con WLED</span><input id="wledIp" class="keypad-input" type="text" inputmode="none" readonly placeholder="192.168.1.100" data-title="IP del ESP32" aria-label="IP del ESP32 con WLED"></label>
                 <label class="field" for="ledCount"><span>Píxeles direccionables</span><input id="ledCount" class="keypad-input" type="text" inputmode="none" readonly value="40" data-title="Píxeles direccionables"></label>
@@ -61,8 +62,9 @@
             <div class="options-grid">
                 <label class="option" for="ledReverse"><span><strong>Invertir sentido</strong><small>Si los colores recorren la tira al revés</small></span><input id="ledReverse" type="checkbox"></label>
                 <label class="option" for="wledSmooth"><span><strong>Suavizar colores</strong><small>Interpola los envíos; no aumenta la captura real</small></span><input id="wledSmooth" type="checkbox"></label>
+                <label class="option" for="wledFastCapture"><span><strong>Captura rápida · 4 puntos</strong><small>Un punto por lado: menos detalle, dos lotes en lugar de cuatro. Requiere instalar el servicio nuevo.</small></span><input id="wledFastCapture" type="checkbox"></label>
             </div>
-            <label class="field transition-field" for="wledTransitionMs"><span>Transición en milisegundos</span><input id="wledTransitionMs" class="keypad-input" type="text" inputmode="none" readonly value="150" data-title="Transición en milisegundos"></label>
+            <label class="field transition-field" for="wledTransitionMs"><span>Transición en milisegundos · probá 60 para reducir el retardo</span><input id="wledTransitionMs" class="keypad-input" type="text" inputmode="none" readonly value="60" data-title="Transición en milisegundos"></label>
             <button id="saveWled" class="primary-button" type="button">Guardar configuración de WLED</button>
             <p id="wledMessage" class="message" role="status"></p>
         </section>

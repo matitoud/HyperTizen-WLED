@@ -5,8 +5,10 @@ let canEnable = false;
 let savedRpcServer = '';
 let reconnectTimer = null;
 let scanTimer = null;
+let perfTimer = null;
 let controlsInitialized = false;
-const configKeys = ['outputMode', 'wledIp', 'ledCount', 'ledTop', 'ledRight', 'ledBottom', 'ledLeft', 'ledStart', 'ledReverse', 'wledSmooth', 'wledTransitionMs'];
+let pendingFastCaptureCheck = null;
+const configKeys = ['outputMode', 'wledIp', 'ledCount', 'ledTop', 'ledRight', 'ledBottom', 'ledLeft', 'ledStart', 'ledReverse', 'wledSmooth', 'wledTransitionMs', 'wledFastCapture'];
 let serverHosts = ['127.0.0.1'];
 let hostIndex = 0;
 let activeHost = '127.0.0.1';
@@ -113,6 +115,7 @@ function onOpen() {
     configKeys.forEach(key => send({ event: events.ReadConfig, key }));
     send({ event: events.ReadConfig, key: 'rpcServer' });
     send({ event: events.ReadConfig, key: 'enabled' });
+    send({ event: events.ReadConfig, key: 'perfWled' });
     updateMode();
     if (document.getElementById('outputMode').value === 'hyperhdr') send({ event: events.ScanSSDP });
 }
@@ -167,10 +170,12 @@ function setupControls() {
         let sent = true;
         configKeys.filter(k => k !== 'outputMode').forEach(key => {
             const el = document.getElementById(key);
-            sent = send({ event: events.SetConfig, key, value: ['ledReverse', 'wledSmooth'].includes(key) ? String(el.checked) : el.value }) && sent;
+            sent = send({ event: events.SetConfig, key, value: ['ledReverse', 'wledSmooth', 'wledFastCapture'].includes(key) ? String(el.checked) : el.value }) && sent;
         });
         sent = send({ event: events.SetConfig, key: 'applyWled', value: 'true' }) && sent;
-        document.getElementById('wledMessage').innerText = sent ? 'Configuración enviada al servicio' : 'No se guardó: se perdió la conexión con el servicio';
+        pendingFastCaptureCheck = sent ? String(document.getElementById('wledFastCapture').checked) : null;
+        if (sent) send({ event: events.ReadConfig, key: 'wledFastCapture' });
+        document.getElementById('wledMessage').innerText = sent ? 'Configuración enviada al servicio; comprobando modo de captura' : 'No se guardó: se perdió la conexión con el servicio';
         updateMode();
     };
     document.getElementById('enabled').onchange = (e) => {
@@ -186,18 +191,34 @@ function setupControls() {
         if (client && client.readyState === WebSocket.OPEN && document.getElementById('outputMode').value === 'hyperhdr')
             send({ event: events.ScanSSDP });
     }, 10000);
+    if (perfTimer === null) perfTimer = setInterval(() => {
+        if (client && client.readyState === WebSocket.OPEN && document.getElementById('outputMode').value === 'wled')
+            send({ event: events.ReadConfig, key: 'perfWled' });
+    }, 1000);
 }
 
 function onMessage(data) {
     const msg = JSON.parse(data.data);
     switch(msg.Event) {
         case events.ReadConfigResult:
-            if (msg.key === 'outputMode' && !msg.error) {
+            if (msg.key === 'wledFastCapture' && pendingFastCaptureCheck !== null) {
+                document.getElementById('wledMessage').textContent = !msg.error && msg.value === pendingFastCaptureCheck
+                    ? 'Configuración de captura confirmada por el servicio'
+                    : 'El servicio instalado no confirmó la captura rápida. Instalá el .tpk nuevo para usarla.';
+                pendingFastCaptureCheck = null;
+            }
+            if (msg.key === 'perfWled' && !msg.error) {
+                try {
+                    const perf = JSON.parse(msg.value);
+                    document.getElementById('perfWled').textContent =
+                        `Captura real: ${perf.captureFps.toFixed(1)} FPS · DDP: ${perf.ddpFps.toFixed(1)} envíos/s · ${perf.batchesPerFrame.toFixed(1)} lotes/captura · ${perf.batchMs.toFixed(1)} ms/lote · actualización cada segundo`;
+                } catch (error) { /* Ignore malformed or obsolete service metrics. */ }
+            } else if (msg.key === 'outputMode' && !msg.error) {
                 document.getElementById('outputMode').value = msg.value;
                 updateMode();
-            } else if (['wledIp', 'ledCount', 'ledTop', 'ledRight', 'ledBottom', 'ledLeft', 'ledStart', 'ledReverse', 'wledSmooth', 'wledTransitionMs'].includes(msg.key) && !msg.error) {
+            } else if (configKeys.includes(msg.key) && !msg.error) {
                 const el = document.getElementById(msg.key);
-                if (['ledReverse', 'wledSmooth'].includes(msg.key)) el.checked = msg.value === 'true'; else el.value = msg.value;
+                if (['ledReverse', 'wledSmooth', 'wledFastCapture'].includes(msg.key)) el.checked = msg.value === 'true'; else el.value = msg.value;
                 if (msg.key === 'wledIp') updateMode();
             } else if(msg.key === 'rpcServer' && !msg.error) {
                 canEnable = true;

@@ -76,6 +76,17 @@ Apagá HyperHDR en la PC y cambiá entre imágenes de distintos colores en la TV
 
 Una línea `WLED perf` informa **FPS reales de captura** y **FPS de envío DDP** por separado. El suavizado puede aumentar la cadencia de envío, pero no la de captura.
 
+### Comparar latencia y captura rápida
+
+La captura rápida requiere instalar el `.tpk` compilado desde la versión nueva del servicio. Actualizar solo el módulo de TizenBrew cambia la interfaz, no la captura. Conservá el `.tpk` firmado que ya funciona antes de instalar una versión experimental.
+
+1. Con la misma escena en la TV, dejá **Captura rápida · 4 puntos** desactivada. La interfaz actualiza **Captura real**, **DDP** y **ms/lote** aproximadamente cada segundo. Observá varios valores o esperá diez segundos para una línea `WLED perf` más estable en el registro.
+2. Activá **Captura rápida · 4 puntos**, guardá y compará varios valores. El modo rápido repite un color por lado en las dos zonas LED de ese lado; comprobá también si esa pérdida de detalle te resulta aceptable.
+3. Probá el suavizado a **60 ms** y luego desactivado. Con suavizado desactivado, los lotes se envían apenas terminan; compará el retardo visible además de los FPS.
+4. Si la captura no alcanza 10 FPS, anotá `batchesPerFrame`/lotes por captura y `batchMs`/ms por lote. El límite puede ser la API del televisor. Volvé al modo de ocho puntos si preferís más detalle.
+
+Que DDP indique 30 o más envíos por segundo **no significa** que la TV capture 30 cuadros por segundo. Informá el modelo exacto, versión de Tizen y las mediciones al abrir un issue; quitá las IP y otros datos privados de los registros.
+
 ## Restaurar un paquete anterior
 
 Si conservaste un `.tpk` que funcionaba, copialo a una carpeta privada con el nombre esperado y volvé a instalarlo. Por ejemplo:

@@ -134,6 +134,7 @@ namespace HyperTizen.WebSocket
             int start = ReadInt("ledStart", 0);
             bool reverse = Preference.Contains("ledReverse") && Preference.Get<string>("ledReverse") == "true";
             bool smooth = Preference.Contains("wledSmooth") && Preference.Get<string>("wledSmooth") == "true";
+            bool fastCapture = Preference.Contains("wledFastCapture") && Preference.Get<string>("wledFastCapture") == "true";
             int transitionMs = ReadInt("wledTransitionMs", 150);
             if (count < 1 || count > 480 || top < 2 || right < 2 || bottom < 2 || left < 2 ||
                 top + right + bottom + left != count || start < 0 || start >= count)
@@ -142,8 +143,8 @@ namespace HyperTizen.WebSocket
                 throw new InvalidOperationException("WLED transition must be 50-500 ms");
             if (!Capturer.GetCondition())
                 throw new InvalidOperationException("WLED requires the eight-point libvideoenhance capture API");
-            Tizen.Log.Debug("HyperTizen", $"WLED DDP starting: {ip}:4048, {count} pixels, layout {top}/{right}/{bottom}/{left}; smooth={smooth}/{transitionMs}ms");
-            await new WledPipeline(ip, count, top, right, bottom, left, start, reverse, smooth, transitionMs).RunAsync(ct);
+            Tizen.Log.Debug("HyperTizen", $"WLED DDP starting: {ip}:4048, {count} pixels, layout {top}/{right}/{bottom}/{left}; smooth={smooth}/{transitionMs}ms; fastCapture={fastCapture}");
+            await new WledPipeline(ip, count, top, right, bottom, left, start, reverse, smooth, transitionMs, fastCapture).RunAsync(ct);
         }
 
         public async Task Restart()

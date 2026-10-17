@@ -25,7 +25,7 @@ flowchart LR
     ESP --> LED[Tira LED]
 ```
 
-La TV toma ocho muestras de la pantalla mediante `libvideoenhance.so`, las distribuye entre los píxeles configurados y envía colores a WLED por UDP 4048. Una vez instalado y configurado, no necesita PC, HyperHDR, capturadora HDMI ni cámara. El suavizado puede enviar colores interpolados cerca de 30 veces por segundo, pero **no aumenta los FPS reales de captura**: en la TV probada son aproximadamente 5–6 FPS.
+La TV toma ocho muestras de la pantalla mediante `libvideoenhance.so`, las distribuye entre los píxeles configurados y envía colores a WLED por UDP 4048. Una vez instalado y configurado, no necesita PC, HyperHDR, capturadora HDMI ni cámara. El suavizado puede enviar colores interpolados cerca de 30 veces por segundo, pero **no aumenta los FPS reales de captura**: en la TV probada, con ocho puntos, son aproximadamente 5–6 FPS. El modo experimental de cuatro puntos busca aumentar esa frecuencia; todavía no se midió en la TV.
 
 ## Materiales y conexiones
 
@@ -67,7 +67,7 @@ La IP del ESP32 se carga **en la TV**, en la pantalla **HyperTizen WLED Direct**
 
 En la pantalla **HyperTizen WLED Direct**, seleccioná **WLED DDP** y escribí la IP local del ESP32 en **IP de WLED** (por ejemplo, `192.168.1.100`; usá la dirección real de tu WLED). Con el control remoto, usá **↑/↓** para moverte, **OK** para abrir un campo, las flechas y **OK** para escribir con el teclado de la app, **Listo** para confirmar o **Volver** para cancelar. El campo seleccionado lleva un borde amarillo visible. Especificá el total de píxeles direccionables y los correspondientes a arriba, derecha, abajo e izquierda; los cuatro lados deben sumar el total. Pulsá **Guardar configuración de WLED** y luego marcá **Activado**. El recorrido lógico comienza arriba a la izquierda y sigue en sentido horario. El píxel inicial desplaza el mapeo; invertir dirección corrige el cableado contrario.
 
-Como punto de partida para 40 píxeles: 12 arriba, 8 derecha, 12 abajo y 8 izquierda. Ajustalo a tu montaje. Probá el suavizado activado y desactivado; 120–180 ms suele ser un rango inicial razonable. Un tiempo mayor reduce tirones pero aumenta la demora visual. El `.tpk` de esta copia escucha solo en `127.0.0.1`. Para conservar compatibilidad con un `.tpk` funcional anterior que escucha en la red local, la interfaz prueba primero `127.0.0.1` y luego la IP de **la propia TV** obtenida mediante la API de Samsung. Si la detección falla, aparece **«IP de esta TV»**: ingresá ahí la dirección de la TV, distinta de la IP del ESP32, y pulsá **Conectar con HyperTizen**. Esa dirección se guarda solo en el almacenamiento local de la interfaz. No exponer el puerto de configuración a Internet.
+Como punto de partida para 40 píxeles: 12 arriba, 8 derecha, 12 abajo y 8 izquierda. Ajustalo a tu montaje. Para reducir el retardo, probá **Captura rápida · 4 puntos** y una transición de **60 ms**, o desactivá el suavizado. Cuatro puntos toman una muestra por lado y la repiten en las dos zonas de ese lado: se pierde detalle espacial a cambio de menos lotes de captura. Este modo requiere **instalar el servicio `.tpk` nuevo**; actualizar solo el módulo de TizenBrew no lo activa. En la pantalla aparece la medición de FPS reales y envíos DDP, actualizada aproximadamente cada segundo. La interfaz prueba `127.0.0.1` y luego la IP de **la propia TV** obtenida mediante la API de Samsung. Si la detección falla, aparece **«IP de esta TV»**: ingresá ahí la dirección de la TV, distinta de la IP del ESP32, y pulsá **Conectar con HyperTizen**. El servicio nuevo acepta configuración originada en la propia TV por cualquiera de esas direcciones y rechaza clientes de otros equipos. No exponer el puerto de configuración a Internet.
 
 ## Compilar
 
@@ -80,7 +80,7 @@ Se necesitan .NET SDK, Tizen Studio TV SDK y un perfil de firma propio. Ejecutá
 | Tira apagada | IP y red local, UDP 4048, modo WLED, servicio activado y cantidad de píxeles. |
 | Colores en otro lado | Cantidades por lado, píxel inicial y dirección. |
 | Movimiento a tirones | Activá suavizado y compará FPS de captura con FPS de envío en los registros `WLED perf`. |
-| Mucha demora | Bajá la transición hacia 120 ms o desactivá suavizado. |
+| Mucha demora | Probá captura rápida, transición de 60 ms o suavizado desactivado. Compará los FPS reales antes y después. |
 | Error de certificado | Firmá con tu propio perfil Samsung y el identificador de tu TV. |
 | Falla de captura | Tu modelo puede no exponer la API de ocho puntos; adjuntá registros sin datos privados. |
 | La interfaz muestra una IP vieja de HyperHDR mientras WLED funciona | Actualizá el módulo `HyperTizenUI`. Esa IP guardada no indica una conexión activa ni afecta el envío DDP. |
@@ -90,7 +90,7 @@ Se necesitan .NET SDK, Tizen Studio TV SDK y un perfil de firma propio. Ejecutá
 
 **¿Necesito una PC encendida?** No durante el uso normal; puede ser necesaria para instalar o actualizar.
 
-**¿Los 30 FPS son de captura?** No. Son la cadencia objetivo de envío interpolado. La captura probada es de unos 5–6 FPS.
+**¿Los 30 FPS son de captura?** No. Son la cadencia objetivo de envío interpolado. La captura comprobada de ocho puntos es de unos 5–6 FPS. Todavía falta medir la captura rápida de cuatro puntos en la TV.
 
 **¿Funciona en cualquier Samsung?** No está comprobado. Informá modelo, firmware, versión de Tizen y resultados en un issue.
 

@@ -17,8 +17,10 @@ namespace HyperTizen
         private enum ApiVariant { Unknown, PpiVe, Ve7, CsVe }
         private static ApiVariant _api = ApiVariant.Unknown;
 
-        // 8 static points — all captured every frame.
-        // 4 batches × 20ms = ~10fps, all 8 zones update together.
+        // These are the eight positions already validated with libvideoenhance.
+        // Fast mode samples one position per side and mirrors it to that side's
+        // two LED zones. It halves the number of hardware batches at the cost
+        // of spatial detail; no untested capture positions are introduced.
         private static readonly CapturePoint[][] _pointSets = {
             new CapturePoint[] {
                 new CapturePoint(0.21,  0.05),   // [0] top-left
@@ -33,6 +35,7 @@ namespace HyperTizen
         };
         private static int _setIndex = 0;
         private static readonly Color[] _blended = new Color[8];
+        private static readonly int[] FastIndices = { 0, 2, 4, 6 };
 
         // Tizen 9 new firmware (ppi_ve_* prefix)
         [DllImport("/usr/lib/libvideoenhance.so", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ppi_ve_get_rgb_measure_condition")]
@@ -168,28 +171,29 @@ namespace HyperTizen
 
         public static async Task<Color[]> GetColors() => (await GetColorsWithMetrics()).Colors;
 
-        public static async Task<CaptureResult> GetColorsWithMetrics()
+        public static async Task<CaptureResult> GetColorsWithMetrics(bool fast = false, Action<Color[]> onBatch = null)
         {
             long captureStart = Stopwatch.GetTimestamp();
             double batchMs = 0;
             double minBatchMs = double.MaxValue, maxBatchMs = 0;
             int batches = 0;
             CapturePoint[] pts = _pointSets[_setIndex];
-            int offset = _setIndex * 4;
+            int pointCount = fast ? FastIndices.Length : pts.Length;
 
             int i = 0;
-            while (i < pts.Length)
+            while (i < pointCount)
             {
                 if (_condition.ScreenCapturePoints == 0) break;
 
-                int batchSize = Math.Min(_condition.ScreenCapturePoints, pts.Length - i);
+                int batchSize = Math.Min(_condition.ScreenCapturePoints, pointCount - i);
                 int batchStart = i;
                 long batchStartTicks = Stopwatch.GetTimestamp();
 
                 for (int j = 0; j < batchSize; j++)
                 {
-                    int x = (int)(pts[i].X * (double)_condition.Width) - _condition.PixelDensityX / 2;
-                    int y = (int)(pts[i].Y * (double)_condition.Height) - _condition.PixelDensityY / 2;
+                    int pointIndex = fast ? FastIndices[i] : i;
+                    int x = (int)(pts[pointIndex].X * (double)_condition.Width) - _condition.PixelDensityX / 2;
+                    int y = (int)(pts[pointIndex].Y * (double)_condition.Height) - _condition.PixelDensityY / 2;
                     x = (x >= _condition.Width - _condition.PixelDensityX) ? _condition.Width - (_condition.PixelDensityX + 1) : x;
                     y = (y >= _condition.Height - _condition.PixelDensityY) ? (_condition.Height - _condition.PixelDensityY + 1) : y;
 
@@ -207,7 +211,9 @@ namespace HyperTizen
 
                     if (res >= 0 && color.R <= 1023 && color.G <= 1023 && color.B <= 1023)
                     {
-                        _blended[offset + batchStart + k] = color;
+                        int pointIndex = fast ? FastIndices[batchStart + k] : batchStart + k;
+                        _blended[pointIndex] = color;
+                        if (fast) _blended[pointIndex + 1] = color;
                         k++;
                         retries = 0;
                     }
@@ -218,6 +224,10 @@ namespace HyperTizen
                 minBatchMs = Math.Min(minBatchMs, elapsedBatchMs);
                 maxBatchMs = Math.Max(maxBatchMs, elapsedBatchMs);
                 batches++;
+                // The callback consumes these colors before the next native batch
+                // can modify the reused buffer. WLED can send partial updates
+                // immediately when smoothing is disabled.
+                onBatch?.Invoke(_blended);
             }
 
             _setIndex = 0; // single set, no rotation

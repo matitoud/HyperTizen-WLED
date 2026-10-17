@@ -1,5 +1,13 @@
 # Registro de cambios
 
+## Interfaz 1.0.5 y servicio de captura rápida — prueba local
+
+- Modo opcional de cuatro puntos: usa dos lotes donde el modo de ocho puntos usa cuatro si el hardware admite dos puntos por lote. La frecuencia real sigue pendiente de medición en la TV.
+- Con suavizado desactivado, envía a WLED cada lote terminado después del primer cuadro completo para reducir la espera de las zonas recién capturadas.
+- Muestra en la interfaz FPS reales de captura, envíos DDP y tiempo promedio por lote, medidos en ventanas de un segundo. Los registros detallados conservan ventanas de diez segundos.
+- Valor inicial de transición en la interfaz reducido a 60 ms. Las configuraciones ya guardadas conservan su valor.
+- El servicio acepta la conexión de configuración desde la propia TV y rechaza equipos externos de la red local.
+
 ## Interfaz 1.0.4
 
 - Campo de recuperación para indicar la IP de la TV cuando la detección automática falla.

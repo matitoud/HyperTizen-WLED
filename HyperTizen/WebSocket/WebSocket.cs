@@ -34,6 +34,18 @@ namespace HyperTizen.WebSocket
             while (true)
             {
                 var httpContext = await _httpListener.GetContextAsync();
+                // TizenBrew may need to reach the service through the TV's own
+                // LAN address. Reject clients on other devices: this config
+                // endpoint has no login and can change output settings.
+                IPAddress remote = httpContext.Request.RemoteEndPoint?.Address;
+                IPAddress local = httpContext.Request.LocalEndPoint?.Address;
+                if (remote == null || local == null ||
+                    (!IPAddress.IsLoopback(remote) && !remote.Equals(local)))
+                {
+                    httpContext.Response.StatusCode = 403;
+                    httpContext.Response.Close();
+                    continue;
+                }
                 if (httpContext.Request.IsWebSocketRequest)
                 {
                     var wsContext = await httpContext.AcceptWebSocketAsync(null);
@@ -114,7 +126,12 @@ namespace HyperTizen.WebSocket
         private async Task<string> ReadConfigAsync(ReadConfigEvent readConfigEvent)
         {
             string result;
-            if (!IsPublicConfigKey(readConfigEvent.key) || !Preference.Contains(readConfigEvent.key))
+            if (readConfigEvent.key == "perfWled")
+            {
+                string metrics = WledPipeline.LatestMetrics;
+                result = JsonConvert.SerializeObject(new ReadConfigResultEvent(metrics == null, readConfigEvent.key, metrics ?? "Awaiting WLED metrics"));
+            }
+            else if (!IsPublicConfigKey(readConfigEvent.key) || !Preference.Contains(readConfigEvent.key))
             {
                 result = JsonConvert.SerializeObject(new ReadConfigResultEvent(true, readConfigEvent.key, "Key doesn't exist."));
             }
@@ -133,7 +150,7 @@ namespace HyperTizen.WebSocket
                 case "rpcServer": case "enabled": case "outputMode": case "wledIp":
                 case "ledCount": case "ledTop": case "ledRight": case "ledBottom":
                 case "ledLeft": case "ledStart": case "ledReverse":
-                case "wledSmooth": case "wledTransitionMs": return true;
+                case "wledSmooth": case "wledTransitionMs": case "wledFastCapture": return true;
                 default: return false;
             }
         }
@@ -182,6 +199,7 @@ namespace HyperTizen.WebSocket
                 case "ledReverse":
                 case "wledSmooth":
                 case "wledTransitionMs":
+                case "wledFastCapture":
                     Preference.Set(setConfigEvent.key, setConfigEvent.value);
                     return;
                 case "applyWled":
@@ -197,7 +215,7 @@ namespace HyperTizen.WebSocket
     {
         public static async Task StartServerAsync()
         {
-            var wsServer = new WSServer("http://127.0.0.1:8086/");
+            var wsServer = new WSServer("http://+:8086/");
             await wsServer.StartAsync();
         }
     }
