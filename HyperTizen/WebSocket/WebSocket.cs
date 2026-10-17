@@ -150,7 +150,8 @@ namespace HyperTizen.WebSocket
                 case "rpcServer": case "enabled": case "outputMode": case "wledIp":
                 case "ledCount": case "ledTop": case "ledRight": case "ledBottom":
                 case "ledLeft": case "ledStart": case "ledReverse":
-                case "wledSmooth": case "wledTransitionMs": case "wledFastCapture": return true;
+                case "wledSmooth": case "wledTransitionMs": case "wledFastCapture":
+                case "wledAdaptiveSmooth": return true;
                 default: return false;
             }
         }
@@ -197,10 +198,17 @@ namespace HyperTizen.WebSocket
                 case "ledLeft":
                 case "ledStart":
                 case "ledReverse":
-                case "wledSmooth":
                 case "wledTransitionMs":
                 case "wledFastCapture":
                     Preference.Set(setConfigEvent.key, setConfigEvent.value);
+                    return;
+                case "wledSmooth":
+                    Preference.Set("wledSmooth", setConfigEvent.value);
+                    if (setConfigEvent.value == "true") Preference.Set("wledAdaptiveSmooth", "false");
+                    return;
+                case "wledAdaptiveSmooth":
+                    Preference.Set("wledAdaptiveSmooth", setConfigEvent.value);
+                    if (setConfigEvent.value == "true") Preference.Set("wledSmooth", "false");
                     return;
                 case "applyWled":
                     _ = App.client.Restart();

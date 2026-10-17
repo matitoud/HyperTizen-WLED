@@ -78,6 +78,8 @@ In **HyperTizen WLED Direct**, choose **WLED DDP** and enter the ESP32's local a
 
 For the tested 40-pixel setup, an initial layout is 12 top, 8 right, 12 bottom, 8 left. Adjust these values to your own physical wiring. To reduce lag, try **Captura rápida · 4 puntos** with a 60 ms transition, or disable smoothing. Fast capture reuses one validated sample per side for both zones on that side: fewer hardware batches, less spatial detail. It requires installing the updated service `.tpk`; updating only the TizenBrew module is insufficient. The TizenBrew UI updates measured capture FPS and DDP send rate about once per second.
 
+**Adaptive smoothing (experimental):** its checkbox is exclusive with fixed-time smoothing. The service derives transition duration from recent complete-capture intervals and clamps it to 35–120 ms. The active transition appears beside the FPS measurements. Adaptive smoothing can be combined with four-point capture. With all smoothing disabled, each finished hardware batch is sent immediately. This option also requires the updated `.tpk` and has not yet been tested on the TV.
+
 The UI tries `127.0.0.1` first, then the TV's own IP obtained through Samsung's Network API. If detection fails, enter the TV's IP in **IP de esta TV** and select **Conectar con HyperTizen**. This is different from the ESP32 address and is saved only in the UI's local storage. The new service accepts configuration requests originating on the TV itself and rejects other network clients. Do not expose the configuration port to the Internet.
 
 ## Build from source

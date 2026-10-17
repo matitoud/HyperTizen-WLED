@@ -61,10 +61,11 @@
             <div class="divider"></div>
             <div class="options-grid">
                 <label class="option" for="ledReverse"><span><strong>Invertir sentido</strong><small>Si los colores recorren la tira al revés</small></span><input id="ledReverse" type="checkbox"></label>
-                <label class="option" for="wledSmooth"><span><strong>Suavizar colores</strong><small>Interpola los envíos; no aumenta la captura real</small></span><input id="wledSmooth" type="checkbox"></label>
+                <label class="option" for="wledSmooth"><span><strong>Suavizar colores</strong><small>Tiempo fijo de transición; no aumenta la captura real</small></span><input id="wledSmooth" type="checkbox"></label>
+                <label class="option" for="wledAdaptiveSmooth"><span><strong>Suavizado adaptativo · experimental</strong><small>Ajusta la transición según los FPS reales y desactiva el suavizado fijo</small></span><input id="wledAdaptiveSmooth" type="checkbox"></label>
                 <label class="option" for="wledFastCapture"><span><strong>Captura rápida · 4 puntos</strong><small>Un punto por lado: menos detalle, dos lotes en lugar de cuatro. Requiere instalar el servicio nuevo.</small></span><input id="wledFastCapture" type="checkbox"></label>
             </div>
-            <label class="field transition-field" for="wledTransitionMs"><span>Transición en milisegundos · probá 60 para reducir el retardo</span><input id="wledTransitionMs" class="keypad-input" type="text" inputmode="none" readonly value="60" data-title="Transición en milisegundos"></label>
+            <label class="field transition-field" for="wledTransitionMs"><span>Transición fija en milisegundos · probá 60 para reducir el retardo</span><input id="wledTransitionMs" class="keypad-input" type="text" inputmode="none" readonly value="60" data-title="Transición en milisegundos"></label>
             <button id="saveWled" class="primary-button" type="button">Guardar configuración de WLED</button>
             <p id="wledMessage" class="message" role="status"></p>
         </section>

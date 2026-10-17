@@ -83,6 +83,7 @@ La captura rápida requiere instalar el `.tpk` compilado desde la versión nueva
 1. Con la misma escena en la TV, dejá **Captura rápida · 4 puntos** desactivada. La interfaz actualiza **Captura real**, **DDP** y **ms/lote** aproximadamente cada segundo. Observá varios valores o esperá diez segundos para una línea `WLED perf` más estable en el registro.
 2. Activá **Captura rápida · 4 puntos**, guardá y compará varios valores. El modo rápido repite un color por lado en las dos zonas LED de ese lado; comprobá también si esa pérdida de detalle te resulta aceptable.
 3. Probá el suavizado a **60 ms** y luego desactivado. Con suavizado desactivado, los lotes se envían apenas terminan; compará el retardo visible además de los FPS.
+   También podés activar **Suavizado adaptativo · experimental**: desmarca automáticamente el suavizado fijo y muestra la transición calculada junto a los FPS. Probalo con cuatro y ocho puntos; si aparecen tirones o más demora, volvé al modo fijo o dejá ambos apagados.
 4. Si la captura no alcanza 10 FPS, anotá `batchesPerFrame`/lotes por captura y `batchMs`/ms por lote. El límite puede ser la API del televisor. Volvé al modo de ocho puntos si preferís más detalle.
 
 Que DDP indique 30 o más envíos por segundo **no significa** que la TV capture 30 cuadros por segundo. Informá el modelo exacto, versión de Tizen y las mediciones al abrir un issue; quitá las IP y otros datos privados de los registros.

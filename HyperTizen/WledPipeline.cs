@@ -18,9 +18,12 @@ namespace HyperTizen
         private readonly SemaphoreSlim _newTarget = new SemaphoreSlim(0, 1);
         private readonly byte[] _from, _target, _frame;
         private readonly IPAddress _ip;
-        private readonly int _count, _top, _right, _bottom, _left, _start, _transitionMs;
-        private readonly bool _reverse, _smooth, _fastCapture;
+        private readonly int _count, _top, _right, _bottom, _left, _start;
+        private readonly bool _reverse, _smooth, _fastCapture, _adaptiveSmooth;
         private long _transitionStart;
+        private long _lastTargetTicks;
+        private double _averageCaptureMs;
+        private int _activeTransitionMs;
         private bool _ready;
         private long _captures, _batches, _targets;
         private double _captureMs, _batchMs, _processingMs;
@@ -29,11 +32,14 @@ namespace HyperTizen
         private double _totalBatchMs;
 
         public WledPipeline(IPAddress ip, int count, int top, int right, int bottom,
-            int left, int start, bool reverse, bool smooth, int transitionMs, bool fastCapture)
+            int left, int start, bool reverse, bool smooth, int transitionMs, bool fastCapture, bool adaptiveSmooth)
         {
             _ip = ip; _count = count; _top = top; _right = right; _bottom = bottom;
             _left = left; _start = start; _reverse = reverse;
-            _smooth = smooth; _transitionMs = transitionMs; _fastCapture = fastCapture;
+            _adaptiveSmooth = adaptiveSmooth;
+            _smooth = smooth || adaptiveSmooth;
+            _fastCapture = fastCapture;
+            _activeTransitionMs = adaptiveSmooth ? 75 : transitionMs;
             _from = new byte[count * 3];
             _target = new byte[count * 3];
             _frame = new byte[count * 3];
@@ -82,7 +88,9 @@ namespace HyperTizen
                                     targetFps = targets * 1000.0 / telemetryMs,
                                     batchMs = batches == 0 ? 0 : (_totalBatchMs - previousBatchMs) / batches,
                                     batchesPerFrame = captures == 0 ? 0 : (double)batches / captures,
-                                    fastCapture = _fastCapture
+                                    fastCapture = _fastCapture,
+                                    adaptiveSmooth = _adaptiveSmooth,
+                                    transitionMs = _activeTransitionMs
                                 }));
                                 previousCaptures = _totalCaptures;
                                 previousBatches = _totalBatches;
@@ -99,7 +107,7 @@ namespace HyperTizen
                             lock (_sync)
                             {
                                 Tizen.Log.Debug("HyperTizen", string.Format(
-                                    "WLED perf: capture={0:F1}fps ({1} frames), batch min/avg/max={2:F1}/{3:F1}/{4:F1}ms ({5:F1} per capture), captureTotal={6:F1}ms, colorMap={7:F2}ms, render={8:F2}ms, DDP={9:F1}fps, UDP={10:F2}ms; smooth={11}/{12}ms, fastCapture={13}, targetUpdates={14:F1}fps",
+                                    "WLED perf: capture={0:F1}fps ({1} frames), batch min/avg/max={2:F1}/{3:F1}/{4:F1}ms ({5:F1} per capture), captureTotal={6:F1}ms, colorMap={7:F2}ms, render={8:F2}ms, DDP={9:F1}fps, UDP={10:F2}ms; smooth={11}/{12}ms, fastCapture={13}, targetUpdates={14:F1}fps, adaptiveSmooth={15}",
                                     _captures * 1000.0 / windowMs, _captures,
                                     _batches == 0 ? 0 : _minBatchMs,
                                     _batches == 0 ? 0 : _batchMs / _batches,
@@ -109,7 +117,7 @@ namespace HyperTizen
                                     _captures == 0 ? 0 : _processingMs / _captures,
                                     sends == 0 ? 0 : renderMs / sends,
                                     sends * 1000.0 / windowMs, sends == 0 ? 0 : udpMs / sends,
-                                    _smooth, _transitionMs, _fastCapture, _targets * 1000.0 / windowMs));
+                                    _smooth, _activeTransitionMs, _fastCapture, _targets * 1000.0 / windowMs, _adaptiveSmooth));
                                 _captures = _batches = _targets = 0;
                                 _captureMs = _batchMs = _processingMs = 0;
                                 _minBatchMs = double.MaxValue; _maxBatchMs = 0;
@@ -181,6 +189,23 @@ namespace HyperTizen
                     Render(now, _from);
                 else
                     Buffer.BlockCopy(mapped, 0, _from, 0, mapped.Length);
+                if (_adaptiveSmooth)
+                {
+                    if (_lastTargetTicks != 0)
+                    {
+                        double intervalMs = (now - _lastTargetTicks) * 1000.0 / Stopwatch.Frequency;
+                        if (intervalMs >= 25 && intervalMs <= 1000)
+                        {
+                            _averageCaptureMs = _averageCaptureMs == 0 ? intervalMs :
+                                _averageCaptureMs * 0.7 + intervalMs * 0.3;
+                            // Finish before the next likely capture, while capping
+                            // visual lag if this TV captures very slowly.
+                            _activeTransitionMs = (int)Math.Clamp(
+                                Math.Round(_averageCaptureMs * 0.55), 35, 120);
+                        }
+                    }
+                    _lastTargetTicks = now;
+                }
                 Buffer.BlockCopy(mapped, 0, _target, 0, mapped.Length);
                 _transitionStart = now;
                 _ready = true;
@@ -194,7 +219,7 @@ namespace HyperTizen
         private void Render(long now, byte[] destination)
         {
             double fraction = _smooth
-                ? Math.Min(1.0, (now - _transitionStart) * 1000.0 / Stopwatch.Frequency / _transitionMs)
+                ? Math.Min(1.0, (now - _transitionStart) * 1000.0 / Stopwatch.Frequency / _activeTransitionMs)
                 : 1.0;
             for (int i = 0; i < destination.Length; i++)
                 destination[i] = (byte)Math.Round(_from[i] + (_target[i] - _from[i]) * fraction);

@@ -1,5 +1,12 @@
 # Registro de cambios
 
+## Interfaz 1.0.6 y suavizado adaptativo — prueba local
+
+- Casilla experimental de suavizado adaptativo, exclusiva con el suavizado de tiempo fijo en la interfaz y el servicio.
+- La transición sigue el intervalo promedio entre capturas completas y queda limitada a 35–120 ms para contener la latencia.
+- La medición de la interfaz muestra el tiempo de transición vigente; sigue separando captura real y envíos DDP.
+- La captura rápida de cuatro puntos se puede combinar con cualquiera de los dos modos de suavizado.
+
 ## Interfaz 1.0.5 y servicio de captura rápida — prueba local
 
 - Modo opcional de cuatro puntos: usa dos lotes donde el modo de ocho puntos usa cuatro si el hardware admite dos puntos por lote. La frecuencia real sigue pendiente de medición en la TV.

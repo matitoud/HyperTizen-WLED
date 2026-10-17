@@ -7,8 +7,8 @@ let reconnectTimer = null;
 let scanTimer = null;
 let perfTimer = null;
 let controlsInitialized = false;
-let pendingFastCaptureCheck = null;
-const configKeys = ['outputMode', 'wledIp', 'ledCount', 'ledTop', 'ledRight', 'ledBottom', 'ledLeft', 'ledStart', 'ledReverse', 'wledSmooth', 'wledTransitionMs', 'wledFastCapture'];
+let pendingSaveChecks = null;
+const configKeys = ['outputMode', 'wledIp', 'ledCount', 'ledTop', 'ledRight', 'ledBottom', 'ledLeft', 'ledStart', 'ledReverse', 'wledSmooth', 'wledAdaptiveSmooth', 'wledTransitionMs', 'wledFastCapture'];
 let serverHosts = ['127.0.0.1'];
 let hostIndex = 0;
 let activeHost = '127.0.0.1';
@@ -120,9 +120,20 @@ function onOpen() {
     if (document.getElementById('outputMode').value === 'hyperhdr') send({ event: events.ScanSSDP });
 }
 
+function updateSmoothingSelection(changed) {
+    const fixed = document.getElementById('wledSmooth');
+    const adaptive = document.getElementById('wledAdaptiveSmooth');
+    if (changed === 'adaptive' && adaptive.checked) fixed.checked = false;
+    if (changed === 'fixed' && fixed.checked) adaptive.checked = false;
+    if (adaptive.checked) fixed.checked = false;
+    document.getElementById('wledTransitionMs').disabled = adaptive.checked;
+}
+
 function setupControls() {
     if (controlsInitialized) return;
     controlsInitialized = true;
+    document.getElementById('wledSmooth').onchange = () => updateSmoothingSelection('fixed');
+    document.getElementById('wledAdaptiveSmooth').onchange = () => updateSmoothingSelection('adaptive');
     document.getElementById('connectTv').onclick = () => {
         const tvIp = document.getElementById('tvIpOverride').value.trim();
         const message = document.getElementById('connectionMessage');
@@ -147,6 +158,7 @@ function setupControls() {
         if (e.target.value === 'hyperhdr') send({ event: events.ScanSSDP });
     };
     document.getElementById('saveWled').onclick = () => {
+        updateSmoothingSelection('adaptive');
         const count = Number(document.getElementById('ledCount').value);
         const sides = ['ledTop', 'ledRight', 'ledBottom', 'ledLeft'].map(k => Number(document.getElementById(k).value));
         const start = Number(document.getElementById('ledStart').value);
@@ -170,12 +182,19 @@ function setupControls() {
         let sent = true;
         configKeys.filter(k => k !== 'outputMode').forEach(key => {
             const el = document.getElementById(key);
-            sent = send({ event: events.SetConfig, key, value: ['ledReverse', 'wledSmooth', 'wledFastCapture'].includes(key) ? String(el.checked) : el.value }) && sent;
+            sent = send({ event: events.SetConfig, key, value: ['ledReverse', 'wledSmooth', 'wledAdaptiveSmooth', 'wledFastCapture'].includes(key) ? String(el.checked) : el.value }) && sent;
         });
         sent = send({ event: events.SetConfig, key: 'applyWled', value: 'true' }) && sent;
-        pendingFastCaptureCheck = sent ? String(document.getElementById('wledFastCapture').checked) : null;
-        if (sent) send({ event: events.ReadConfig, key: 'wledFastCapture' });
-        document.getElementById('wledMessage').innerText = sent ? 'Configuración enviada al servicio; comprobando modo de captura' : 'No se guardó: se perdió la conexión con el servicio';
+        pendingSaveChecks = sent ? {
+            wledFastCapture: String(document.getElementById('wledFastCapture').checked),
+            wledAdaptiveSmooth: String(document.getElementById('wledAdaptiveSmooth').checked),
+            results: {}
+        } : null;
+        if (sent) {
+            send({ event: events.ReadConfig, key: 'wledFastCapture' });
+            send({ event: events.ReadConfig, key: 'wledAdaptiveSmooth' });
+        }
+        document.getElementById('wledMessage').innerText = sent ? 'Configuración enviada; comprobando los modos nuevos' : 'No se guardó: se perdió la conexión con el servicio';
         updateMode();
     };
     document.getElementById('enabled').onchange = (e) => {
@@ -201,24 +220,29 @@ function onMessage(data) {
     const msg = JSON.parse(data.data);
     switch(msg.Event) {
         case events.ReadConfigResult:
-            if (msg.key === 'wledFastCapture' && pendingFastCaptureCheck !== null) {
-                document.getElementById('wledMessage').textContent = !msg.error && msg.value === pendingFastCaptureCheck
-                    ? 'Configuración de captura confirmada por el servicio'
-                    : 'El servicio instalado no confirmó la captura rápida. Instalá el .tpk nuevo para usarla.';
-                pendingFastCaptureCheck = null;
+            if (pendingSaveChecks && (msg.key === 'wledFastCapture' || msg.key === 'wledAdaptiveSmooth')) {
+                pendingSaveChecks.results[msg.key] = !msg.error && msg.value === pendingSaveChecks[msg.key];
+                if (Object.keys(pendingSaveChecks.results).length === 2) {
+                    document.getElementById('wledMessage').textContent =
+                        pendingSaveChecks.results.wledFastCapture && pendingSaveChecks.results.wledAdaptiveSmooth
+                            ? 'Configuración confirmada por el servicio'
+                            : 'El servicio no confirmó los modos nuevos. Instalá el .tpk actualizado.';
+                    pendingSaveChecks = null;
+                }
             }
             if (msg.key === 'perfWled' && !msg.error) {
                 try {
                     const perf = JSON.parse(msg.value);
                     document.getElementById('perfWled').textContent =
-                        `Captura real: ${perf.captureFps.toFixed(1)} FPS · DDP: ${perf.ddpFps.toFixed(1)} envíos/s · ${perf.batchesPerFrame.toFixed(1)} lotes/captura · ${perf.batchMs.toFixed(1)} ms/lote · actualización cada segundo`;
+                        `Captura real: ${perf.captureFps.toFixed(1)} FPS · DDP: ${perf.ddpFps.toFixed(1)} envíos/s · ${perf.batchesPerFrame.toFixed(1)} lotes/captura · ${perf.batchMs.toFixed(1)} ms/lote · transición: ${perf.transitionMs} ms${perf.adaptiveSmooth ? ' adaptativa' : ''} · actualización cada segundo`;
                 } catch (error) { /* Ignore malformed or obsolete service metrics. */ }
             } else if (msg.key === 'outputMode' && !msg.error) {
                 document.getElementById('outputMode').value = msg.value;
                 updateMode();
             } else if (configKeys.includes(msg.key) && !msg.error) {
                 const el = document.getElementById(msg.key);
-                if (['ledReverse', 'wledSmooth', 'wledFastCapture'].includes(msg.key)) el.checked = msg.value === 'true'; else el.value = msg.value;
+                if (['ledReverse', 'wledSmooth', 'wledAdaptiveSmooth', 'wledFastCapture'].includes(msg.key)) el.checked = msg.value === 'true'; else el.value = msg.value;
+                if (msg.key === 'wledSmooth' || msg.key === 'wledAdaptiveSmooth') updateSmoothingSelection(msg.key === 'wledAdaptiveSmooth' ? 'adaptive' : 'fixed');
                 if (msg.key === 'wledIp') updateMode();
             } else if(msg.key === 'rpcServer' && !msg.error) {
                 canEnable = true;

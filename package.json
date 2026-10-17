@@ -1,7 +1,7 @@
 {
   "name": "hypertizen-wled-direct",
   "appName": "HyperTizen WLED Direct",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Configuración en la TV de HyperTizen con salida WLED DDP o HyperHDR.",
   "packageType": "app",
   "appPath": "HyperTizenUI/index.html",
